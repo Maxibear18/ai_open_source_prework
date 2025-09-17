@@ -18,7 +18,9 @@
             worldImage: null,
             viewportOffsetX: 0,
             viewportOffsetY: 0,
-            myPosition: { x: 0, y: 0 }
+            myPosition: { x: 0, y: 0 },
+            keysPressed: {},
+            isMoving: false
         };
         
         // Get canvas and context
@@ -112,6 +114,16 @@
                     
                 case 'players_moved':
                     Object.assign(gameState.players, message.players);
+                    
+                    // Update my position if it changed
+                    if (gameState.playerId && message.players[gameState.playerId]) {
+                        const newPosition = message.players[gameState.playerId];
+                        gameState.myPosition = {
+                            x: newPosition.x,
+                            y: newPosition.y
+                        };
+                        updateViewport();
+                    }
                     break;
                     
                 case 'player_left':
@@ -230,6 +242,68 @@
             ctx.restore();
         }
         
+        // Keyboard movement handling
+        function handleKeyDown(event) {
+            if (event.repeat) return; // Prevent repeated keydown events
+            
+            const key = event.key;
+            let direction = null;
+            
+            switch(key) {
+                case 'ArrowUp':
+                    direction = 'up';
+                    break;
+                case 'ArrowDown':
+                    direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                    direction = 'left';
+                    break;
+                case 'ArrowRight':
+                    direction = 'right';
+                    break;
+            }
+            
+            if (direction && !gameState.keysPressed[key]) {
+                gameState.keysPressed[key] = true;
+                sendMoveCommand(direction);
+            }
+        }
+        
+        function handleKeyUp(event) {
+            const key = event.key;
+            
+            if (gameState.keysPressed[key]) {
+                delete gameState.keysPressed[key];
+                
+                // If no keys are pressed, stop moving
+                if (Object.keys(gameState.keysPressed).length === 0) {
+                    sendStopCommand();
+                }
+            }
+        }
+        
+        function sendMoveCommand(direction) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const moveMessage = {
+                    action: 'move',
+                    direction: direction
+                };
+                ws.send(JSON.stringify(moveMessage));
+                console.log('Sent move command:', direction);
+            }
+        }
+        
+        function sendStopCommand() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const stopMessage = {
+                    action: 'stop'
+                };
+                ws.send(JSON.stringify(stopMessage));
+                console.log('Sent stop command');
+            }
+        }
+        
         // Initialize the game
         function init() {
             resizeCanvas();
@@ -239,6 +313,10 @@
         
         // Handle window resize
         window.addEventListener('resize', resizeCanvas);
+        
+        // Handle keyboard events
+        document.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('keyup', handleKeyUp);
         
         // Start the game when page loads
         window.addEventListener('load', init);
