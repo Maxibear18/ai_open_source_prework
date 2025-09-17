@@ -1,0 +1,31 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Set body to fill entire viewport */
+body {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden; /* Prevent scrollbars */
+    background-color: #000;
+}
+
+/* Canvas styling */
+#gameCanvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000;
+    cursor: crosshair; /* Indicate it's interactive */
+}
+
+/* Ensure canvas fills the entire browser window */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}

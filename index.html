@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini MMORPG Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <script>
+        // Get canvas and context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to fill the browser window
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        // Load and draw the world map
+        function loadWorldMap() {
+            const worldImage = new Image();
+            worldImage.onload = function() {
+                // Draw the world map at actual size (2048x2048)
+                // Position it to show the upper left corner
+                ctx.drawImage(worldImage, 0, 0);
+            };
+            worldImage.src = 'world.jpg';
+        }
+        
+        // Initialize the game
+        function init() {
+            resizeCanvas();
+            loadWorldMap();
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Start the game when page loads
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
