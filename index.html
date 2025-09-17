@@ -9,6 +9,13 @@
 <body>
     <canvas id="gameCanvas"></canvas>
     
+    <!-- Minimap UI -->
+    <div id="minimap">
+        <canvas id="minimapCanvas"></canvas>
+        <div id="minimapTitle">Minimap</div>
+    </div>
+    
+    
     <script>
         // Game state
         let gameState = {
@@ -27,6 +34,11 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Get minimap canvas and context
+        const minimapCanvas = document.getElementById('minimapCanvas');
+        const minimapCtx = minimapCanvas.getContext('2d');
+        
+        
         // WebSocket connection
         let ws = null;
         
@@ -35,6 +47,7 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             updateViewport();
+            renderMinimap();
         }
         
         // Load and draw the world map
@@ -129,9 +142,11 @@
                 case 'player_left':
                     delete gameState.players[message.playerId];
                     break;
+                    
             }
             
             render();
+            renderMinimap();
         }
         
         // Update viewport to center on player
@@ -303,6 +318,56 @@
                 console.log('Sent stop command');
             }
         }
+        
+        // Minimap rendering
+        function renderMinimap() {
+            if (!gameState.worldImage) return;
+            
+            const minimapSize = 200;
+            const worldSize = 2048;
+            const scale = minimapSize / worldSize;
+            
+            // Clear minimap
+            minimapCtx.clearRect(0, 0, minimapSize, minimapSize);
+            
+            // Draw world map background (scaled down)
+            minimapCtx.drawImage(gameState.worldImage, 0, 0, minimapSize, minimapSize);
+            
+            // Draw viewport indicator
+            const viewportX = -gameState.viewportOffsetX * scale;
+            const viewportY = -gameState.viewportOffsetY * scale;
+            const viewportWidth = canvas.width * scale;
+            const viewportHeight = canvas.height * scale;
+            
+            minimapCtx.strokeStyle = '#00ff00';
+            minimapCtx.lineWidth = 2;
+            minimapCtx.strokeRect(viewportX, viewportY, viewportWidth, viewportHeight);
+            
+            // Draw player dots
+            Object.values(gameState.players).forEach((player, index) => {
+                const x = player.x * scale;
+                const y = player.y * scale;
+                const isMe = player.id === gameState.playerId;
+                
+                // Player dot
+                minimapCtx.fillStyle = isMe ? '#ff0000' : getPlayerColor(index);
+                minimapCtx.beginPath();
+                minimapCtx.arc(x, y, isMe ? 4 : 3, 0, 2 * Math.PI);
+                minimapCtx.fill();
+                
+                // Border for better visibility
+                minimapCtx.strokeStyle = '#000000';
+                minimapCtx.lineWidth = 1;
+                minimapCtx.stroke();
+            });
+        }
+        
+        // Get player color for minimap and chat
+        function getPlayerColor(index) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'];
+            return colors[index % colors.length];
+        }
+        
         
         // Initialize the game
         function init() {
